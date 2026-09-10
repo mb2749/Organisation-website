@@ -1,7 +1,9 @@
 """
+Martha's Website — a small personal organizer (calendar, tasks, reminders).
+
 Run with:
     pip install flask
-    python app.py
+    python server.py
 
 Then open http://127.0.0.1:5000 in your browser.
 Data is stored locally in almanac.db (SQLite) and persists between runs.
@@ -37,7 +39,6 @@ def close_db(_exc):
 
 
 def init_db():
-    fresh = not DB_PATH.exists()
     db = sqlite3.connect(DB_PATH)
     db.executescript(
         """
@@ -60,32 +61,13 @@ def init_db():
             date TEXT NOT NULL,
             time TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS today_notes (
+            id TEXT PRIMARY KEY,
+            text TEXT NOT NULL
+        );
         """
     )
-    if fresh:
-        today = date.today().isoformat()
-        db.executemany(
-            "INSERT INTO events (id, title, date, time) VALUES (?, ?, ?, ?)",
-            [
-                (str(uuid.uuid4()), "Studio walkthrough", today, "09:30"),
-                (str(uuid.uuid4()), "Call with Marisol", today, "14:00"),
-            ],
-        )
-        db.executemany(
-            "INSERT INTO tasks (id, title, date, priority, done) VALUES (?, ?, ?, ?, ?)",
-            [
-                (str(uuid.uuid4()), "Reply to landlord about lease renewal", today, "high", 0),
-                (str(uuid.uuid4()), "Order more filter paper", today, "low", 0),
-                (str(uuid.uuid4()), "Draft outline for Q3 review", "", "medium", 0),
-            ],
-        )
-        db.executemany(
-            "INSERT INTO reminders (id, title, date, time) VALUES (?, ?, ?, ?)",
-            [
-                (str(uuid.uuid4()), "Take bread out of the freezer", today, "18:00"),
-            ],
-        )
-        db.commit()
+    db.commit()
     db.close()
 
 
@@ -104,9 +86,10 @@ def state():
     events = [dict(r) for r in db.execute("SELECT * FROM events ORDER BY date, time")]
     tasks = [dict(r) for r in db.execute("SELECT * FROM tasks ORDER BY date")]
     reminders = [dict(r) for r in db.execute("SELECT * FROM reminders ORDER BY date, time")]
+    today_notes = [dict(r) for r in db.execute("SELECT * FROM today_notes")]
     for t in tasks:
         t["done"] = bool(t["done"])
-    return jsonify(events=events, tasks=tasks, reminders=reminders)
+    return jsonify(events=events, tasks=tasks, reminders=reminders, today_notes=today_notes)
 
 
 # ------------------------------------------------------------------- events
@@ -215,6 +198,29 @@ def add_reminder():
 def delete_reminder(reminder_id):
     db = get_db()
     db.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
+    db.commit()
+    return "", 204
+
+
+# -------------------------------------------------------------- today notes
+
+@app.route("/api/today-notes", methods=["POST"])
+def add_today_note():
+    body = request.get_json(force=True)
+    text = (body.get("text") or "").strip()
+    if not text:
+        return jsonify(error="text is required"), 400
+    row = {"id": str(uuid.uuid4()), "text": text}
+    db = get_db()
+    db.execute("INSERT INTO today_notes (id, text) VALUES (:id, :text)", row)
+    db.commit()
+    return jsonify(row), 201
+
+
+@app.route("/api/today-notes/<note_id>", methods=["DELETE"])
+def delete_today_note(note_id):
+    db = get_db()
+    db.execute("DELETE FROM today_notes WHERE id = ?", (note_id,))
     db.commit()
     return "", 204
 
