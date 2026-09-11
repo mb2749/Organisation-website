@@ -3,28 +3,27 @@ import sqlite3
 import uuid
 from datetime import date
 from pathlib import Path
-
+ 
 from flask import Flask, g, jsonify, request, render_template
-
+ 
 DB_PATH = Path(__file__).parent / "almanac.db"
-
+ 
 app = Flask(__name__)
-
 
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
     return g.db
-
-
+ 
+ 
 @app.teardown_appcontext
 def close_db(_exc):
     db = g.pop("db", None)
     if db is not None:
         db.close()
-
-
+ 
+ 
 def init_db():
     db = sqlite3.connect(DB_PATH)
     db.executescript(
@@ -56,17 +55,17 @@ def init_db():
     )
     db.commit()
     db.close()
-
-
-# ------------------------------------------------------------------ pages
-
+ 
+ 
+# pages
+ 
 @app.route("/")
 def index():
     return render_template("index.html")
-
-
-# ------------------------------------------------------------------- state
-
+ 
+ 
+# state
+ 
 @app.route("/api/state")
 def state():
     db = get_db()
@@ -77,10 +76,10 @@ def state():
     for t in tasks:
         t["done"] = bool(t["done"])
     return jsonify(events=events, tasks=tasks, reminders=reminders, today_notes=today_notes)
-
-
-# ------------------------------------------------------------------- events
-
+ 
+ 
+# events
+ 
 @app.route("/api/events", methods=["POST"])
 def add_event():
     body = request.get_json(force=True)
@@ -100,18 +99,18 @@ def add_event():
     )
     db.commit()
     return jsonify(row), 201
-
-
+ 
+ 
 @app.route("/api/events/<event_id>", methods=["DELETE"])
 def delete_event(event_id):
     db = get_db()
     db.execute("DELETE FROM events WHERE id = ?", (event_id,))
     db.commit()
     return "", 204
-
-
-# -------------------------------------------------------------------- tasks
-
+ 
+ 
+# tasks
+ 
 @app.route("/api/tasks", methods=["POST"])
 def add_task():
     body = request.get_json(force=True)
@@ -133,33 +132,37 @@ def add_task():
     db.commit()
     row["done"] = False
     return jsonify(row), 201
-
-
+ 
+ 
 @app.route("/api/tasks/<task_id>", methods=["PATCH"])
 def update_task(task_id):
     body = request.get_json(force=True)
     db = get_db()
     if "done" in body:
         db.execute("UPDATE tasks SET done = ? WHERE id = ?", (1 if body["done"] else 0, task_id))
-        db.commit()
+    if "date" in body:
+        db.execute("UPDATE tasks SET date = ? WHERE id = ?", (body["date"] or "", task_id))
+    if "priority" in body:
+        db.execute("UPDATE tasks SET priority = ? WHERE id = ?", (body["priority"], task_id))
+    db.commit()
     row = db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
     if row is None:
         return jsonify(error="not found"), 404
     result = dict(row)
     result["done"] = bool(result["done"])
     return jsonify(result)
-
-
+ 
+ 
 @app.route("/api/tasks/<task_id>", methods=["DELETE"])
 def delete_task(task_id):
     db = get_db()
     db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     db.commit()
     return "", 204
-
-
-# --------------------------------------------------------------- reminders
-
+ 
+ 
+# reminders
+ 
 @app.route("/api/reminders", methods=["POST"])
 def add_reminder():
     body = request.get_json(force=True)
@@ -179,18 +182,18 @@ def add_reminder():
     )
     db.commit()
     return jsonify(row), 201
-
-
+ 
+ 
 @app.route("/api/reminders/<reminder_id>", methods=["DELETE"])
 def delete_reminder(reminder_id):
     db = get_db()
     db.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
     db.commit()
     return "", 204
-
-
-# -------------------------------------------------------------- today notes
-
+ 
+ 
+# today notes
+ 
 @app.route("/api/today-notes", methods=["POST"])
 def add_today_note():
     body = request.get_json(force=True)
@@ -202,18 +205,19 @@ def add_today_note():
     db.execute("INSERT INTO today_notes (id, text) VALUES (:id, :text)", row)
     db.commit()
     return jsonify(row), 201
-
-
+ 
+ 
 @app.route("/api/today-notes/<note_id>", methods=["DELETE"])
 def delete_today_note(note_id):
     db = get_db()
     db.execute("DELETE FROM today_notes WHERE id = ?", (note_id,))
     db.commit()
     return "", 204
-
-
-init_db()  # runs once on import too, so it works under gunicorn/production servers
-
+ 
+ 
+init_db() 
+ 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+ 
