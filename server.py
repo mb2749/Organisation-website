@@ -1,14 +1,3 @@
-"""
-Martha's Website — a small personal organizer (calendar, tasks, reminders).
-
-Run with:
-    pip install flask
-    python server.py
-
-Then open http://127.0.0.1:5000 in your browser.
-Data is stored locally in almanac.db (SQLite) and persists between runs.
-"""
-
 import os
 import sqlite3
 import uuid
@@ -21,8 +10,6 @@ DB_PATH = Path(__file__).parent / "almanac.db"
 
 app = Flask(__name__)
 
-
-# ---------------------------------------------------------------- database
 
 def get_db():
     if "db" not in g:
