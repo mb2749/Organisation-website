@@ -288,6 +288,7 @@ function renderTasks() {
       <h1 class="view-title">Tasks</h1>
       <div class="tasks-add-row">
         <input type="text" id="task-title" placeholder="Add a task">
+        <input type="date" id="task-date">
         <select id="task-priority">
           <option value="high">High</option>
           <option value="medium" selected>Medium</option>
@@ -320,13 +321,21 @@ function renderTasks() {
       renderTasks();
     });
   });
+  $main.querySelectorAll("[data-set-date]").forEach(el => {
+    el.addEventListener("change", async () => {
+      await api(`/api/tasks/${el.dataset.setDate}`, { method: "PATCH", body: JSON.stringify({ date: el.value }) });
+      await loadState();
+      renderTasks();
+    });
+  });
  
   const addTask = async () => {
     const titleEl = document.getElementById("task-title");
     const title = titleEl.value.trim();
     if (!title) return;
     const priority = document.getElementById("task-priority").value;
-    await api("/api/tasks", { method: "POST", body: JSON.stringify({ title, priority, date: "" }) });
+    const date = document.getElementById("task-date").value || "";
+    await api("/api/tasks", { method: "POST", body: JSON.stringify({ title, priority, date }) });
     await loadState();
     renderTasks();
   };
@@ -335,9 +344,6 @@ function renderTasks() {
 }
  
 function taskRowHtml(t) {
-  const dateTag = (t.date && !t.done)
-    ? `<span class="date-tag">${new Date(t.date + "T00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>`
-    : "";
   return `
     <div class="task-row">
       <button class="checkbox ${t.done ? "checked" : ""}" data-toggle="${t.id}">
@@ -345,7 +351,7 @@ function taskRowHtml(t) {
       </button>
       <span class="dot" style="background:${priorityColor[t.priority]}"></span>
       <p class="title ${t.done ? "done" : ""}">${escapeHtml(t.title)}</p>
-      ${dateTag}
+      <input type="date" class="date-input" value="${t.date || ""}" data-set-date="${t.id}">
       <button class="icon-ghost" data-remove-task="${t.id}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/></svg>
       </button>
