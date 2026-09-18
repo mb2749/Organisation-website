@@ -486,3 +486,48 @@ h1.view-title {
 }
 .auth-switch a { color: var(--pine); font-weight: 600; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
+ 
+/* ---------- sidebar hide/show toolbar ---------- */
+ 
+.wordmark-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 0 8px;
+  margin-bottom: 36px;
+}
+.wordmark-row .wordmark { margin-bottom: 0; }
+ 
+.sidebar-toggle {
+  color: var(--muted);
+}
+.sidebar-toggle svg { width: 16px; height: 16px; }
+ 
+.shell.sidebar-hidden .sidebar { display: none; }
+ 
+.show-sidebar-btn {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(35,40,43,0.08);
+}
+.show-sidebar-btn svg { width: 17px; height: 17px; }
+.show-sidebar-btn:hover { color: var(--pine); border-color: var(--pine); }
+ 
+.shell.sidebar-hidden .show-sidebar-btn { display: flex; }
+ 
+.shell.sidebar-hidden .main {
+  width: 100%;
+}
+ 
