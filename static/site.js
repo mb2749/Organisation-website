@@ -28,7 +28,7 @@ async function loadState() {
   state.todayNotes = data.today_notes;
 }
  
-// ---------------------------------------------------------------- routing
+//routing
  
 document.querySelectorAll(".nav-item").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -42,6 +42,21 @@ document.querySelectorAll(".nav-item").forEach(btn => {
 document.getElementById("sidebar-date").textContent =
   today().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
  
+//sidebar hide
+ 
+const $shell = document.getElementById("shell");
+const $hideSidebarBtn = document.getElementById("hide-sidebar");
+const $showSidebarBtn = document.getElementById("show-sidebar");
+ 
+function setSidebarHidden(hidden) {
+  $shell.classList.toggle("sidebar-hidden", hidden);
+  localStorage.setItem("sidebarHidden", hidden ? "1" : "0");
+}
+ 
+setSidebarHidden(localStorage.getItem("sidebarHidden") === "1");
+$hideSidebarBtn.addEventListener("click", () => setSidebarHidden(true));
+$showSidebarBtn.addEventListener("click", () => setSidebarHidden(false));
+ 
 function render() {
   if (state.view === "today") renderToday();
   else if (state.view === "calendar") renderCalendar();
@@ -49,7 +64,7 @@ function render() {
   else if (state.view === "reminders") renderReminders();
 }
  
-// ------------------------------------------------------------------ today
+//today
  
 function renderToday() {
   const t = today();
@@ -144,7 +159,7 @@ function agendaItemHtml(item) {
     </div>`;
 }
  
-// --------------------------------------------------------------- calendar
+//calendar
  
 function buildMonthGrid(year, month) {
   const first = new Date(year, month, 1);
@@ -269,7 +284,7 @@ function dayCellHtml(d, cursor, selected, eventsByDay) {
     </button>`;
 }
  
-// ------------------------------------------------------------------ tasks
+//tasks
  
 const priorityColor = { high: "#B5652A", medium: "#C7A24A", low: "#8B8B84" };
  
@@ -358,7 +373,7 @@ function taskRowHtml(t) {
     </div>`;
 }
  
-// -------------------------------------------------------------- reminders
+//reminders
  
 function renderReminders() {
   const sorted = [...state.reminders].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
@@ -415,7 +430,7 @@ function reminderRowHtml(r) {
     </div>`;
 }
  
-// -------------------------------------------------------------------- util
+//util
  
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -423,7 +438,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
  
-// -------------------------------------------------------------------- init
+//init
  
 loadState().then(render);
- 
