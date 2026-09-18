@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-
+ 
 <div class="shell">
   <aside class="sidebar">
     <div class="wordmark">Martha's Website</div>
@@ -31,12 +31,18 @@
         Reminders
       </button>
     </nav>
-    <div class="sidebar-footer" id="sidebar-date"></div>
+    <div class="sidebar-footer">
+      <div id="sidebar-date"></div>
+      <div class="sidebar-user">
+        <span>{{ username }}</span>
+        <a href="{{ url_for('logout') }}" class="logout-link">Sign out</a>
+      </div>
+    </div>
   </aside>
-
+ 
   <main class="main" id="main"></main>
 </div>
-
+ 
 <script src="{{ url_for('static', filename='site.js') }}"></script>
 </body>
 </html>
